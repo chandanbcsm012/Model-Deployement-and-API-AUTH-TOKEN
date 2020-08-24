@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Twitter Analysis</title>
+    <!-- Latest compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="jumbotron">
+      <div class="row" id="input">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tweet_text" id="contro_label">Type your tweet:</label>
+            <textarea class="form-control" rows="5" id="tweet_text"></textarea>
+          </div>
+          <button type="button" class="btn btn-primary" id="api">
+            Submit
+          </button>
+          <div class="row" id="output">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label id="output_label"></label>
+              </div>
+              <button id="clear" class="btn btn-danger">clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="output">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label id="output_label"></label>
+            </div>
+            <button id="clear" class="btn btn-danger">clear</button>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="dog_sound" id="dog_contro_label"
+              >Enter dog sound:</label
+            >
+            <input
+              type="text"
+              name="sound"
+              id="dog_sound"
+              class="form-control"
+            />
+          </div>
+          <button type="button" class="btn btn-primary" id="dogapi">
+            Submit
+          </button>
+          <div id="dog_output">
+            <div class="form-group">
+              <label id="dog_label"></label>
+            </div>
+            <button id="sound_clear" class="btn btn-danger">clear</button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Class</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="name"></td>
+                <td class="class"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+  <!-- jQuery library -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <!-- Popper JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $("#output, #dog_output").hide();
+
+      $("#clear").click(() => {
+        $("#tweet_text").val("");
+        $("#api").fadeToggle();
+        $("#output").fadeToggle();
+        $("#output_label").text("");
+        $("#tweet_text").prop("disabled", false);
+        $("#contro_label").text("Type your tweet:");
+      });
+
+      $("#api").click(() => {
+        fetch(
+          `http://localhost:8000/twitter/api/?tweet_text=${encodeURI(
+            $("#tweet_text").val()
+          )}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            console.log(data);
+            $("#output_label").text(
+              `class:${data.class},   probability: ${data.predict_proba}`
+            );
+            $("#api").fadeOut();
+            $("#output").fadeIn();
+            $("#clear").fadeIn();
+            $("#contro_label").text("Your tweet:");
+            $("#tweet_text").prop("disabled", true);
+          });
+      });
+
+      $("#sound_clear").click(() => {
+        $("#dog_sound").val("");
+        $("#dogapi").fadeToggle();
+        $("#dog_output").fadeToggle();
+        $("#dog_label").text("");
+        $("#dog_sound").prop("disabled", false);
+        $("#dog_contro_label").text("Enter dog sound:");
+      });
+
+      let dog_class = [
+        { name: "woof", class: 1 },
+        { name: "bark", class: 1 },
+        { name: "ruff", class: 1 },
+        { name: "bowwow", class: 1 },
+        { name: "roar", class: 0 },
+        { name: "bah", class: 0 },
+        { name: "meow", class: 0 },
+        { name: "ribbit", class: 0 },
+        { name: "moo", class: 0 },
+        { name: "yip", class: 0 },
+        { name: "pika", class: 0 },
+      ];
+
+      $.each(dog_class, function (i, v) {
+        if (i == 0) {
+          setDataOnRow($(".table tbody").find("tr").first(), v);
+        } else {
+          var clonnedRow = $($(".table tbody").find("tr").first()).clone();
+          setDataOnRow(clonnedRow, v);
+
+          $(".table tbody").append(clonnedRow);
+        }
+      });
+
+      function setDataOnRow(rowObject, v) {
+        var test = v.name;
+        var NoOfCarton = v.class;
+        $(rowObject).find(".name").html(test);
+        $(rowObject).find(".class").html(NoOfCarton);
+      }
+
+      $("#dogapi").click(() => {
+        fetch(
+          `http://localhost:8000/classify/?sound=${encodeURI(
+            $("#dog_sound").val()
+          )}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            console.log(data);
+            let mes = `Sorry, this is not a dog sound. accuracy: ${data.dog}`;
+            if (data.dog == 1) {
+              mes = `This is dog sound.  accuracy: ${data.dog}`;
+            }
+            $("#dogapi").fadeOut();
+            $("#dog_output").fadeIn();
+            $("#dog_label").text(`${mes}`);
+            $("#dog_sound").prop("disabled", true);
+            $("#dog_contro_label").text("You enterd dog sound:");
+          });
+      });
+    });
+  </script>
+</html>
